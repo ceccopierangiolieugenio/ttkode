@@ -1,3 +1,9 @@
+# TTKode stuff
+.vscode
+TermTk
+tmp
+dist
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
