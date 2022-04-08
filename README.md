@@ -10,16 +10,13 @@ TerminalToolKit (Studio) Code (editor)
 
 A hopefully fast and mesmerizingly advanced [text-based](https://en.wikipedia.org/wiki/Text-based_user_interface) code editor inspired by [vscode](https://code.visualstudio.com)
 
-
-[![screenshot](https://raw.githubusercontent.com/ceccopierangiolieugenio/binaryRepo/master/tlogg/screenshot.003.png)](https://pypi.org/project/tlogg)
-
 ## Features (TBD)
 - Search Panel
 - Highlight
 - Bookmarks
 - Shiny ASCII Red Peppers
 
-[![screenshot](https://raw.githubusercontent.com/ceccopierangiolieugenio/binaryRepo/master/tlogg/demo.001.gif)](https://pypi.org/project/tlogg)
+[![screenshot](https://raw.githubusercontent.com/ceccopierangiolieugenio/binaryRepo/master/TTKode/ttkode.0.0.0.gif)](https://pypi.org/project/tlogg)
 
 # Install from [pypi](https://pypi.org/project/ttkode) (TBD)
 ```bash

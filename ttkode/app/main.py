@@ -173,9 +173,11 @@ def main():
 
     TTKodeCfg.load()
 
-    if 'theme' not in TTKodeCfg.options:
-        TTKodeCfg.options['theme'] = 'NERD'
+    # if 'theme' not in TTKodeCfg.options:
+    #     TTKodeCfg.options['theme'] = 'NERD'
     # optionsLoadTheme(TTKodeCfg.options['theme'])
+
+    TTkTheme.loadTheme(TTkTheme.NERD)
 
     root = TTk(layout=TTkGridLayout(), title="TTkode")
 
@@ -189,9 +191,13 @@ def main():
         with open(file, 'r') as f:
             content = f.read()
         kt.addTab(te:=TTkTextEdit(),os.path.basename(file))
+        kt.setCurrentWidget(te)
+        te.setReadOnly(False)
         te.setText(highlight(content, PythonLexer(), TerminalTrueColorFormatter(style='rrt')))
 
     for file in args.filename:
         _openFile(file)
+
+    fileTree.fileActivated.connect(lambda x: _openFile(x.path()))
 
     root.mainloop()
