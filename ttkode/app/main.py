@@ -70,16 +70,15 @@ class KodeTab(TTkTabWidget):
         self._name = kwargs.get('name' , 'KodeTab')
         self._frameOverlay = _KolorFrame('visible',False)
         self._frameOverlay.setBorderColor(TTkColor.fg("#00FFFF")+TTkColor.bg("#000044"))
-        self._frameOverlay.setFillColor(TTkColor.bg("#000088"))
+        self._frameOverlay.setFillColor(TTkColor.bg("#000088", modifier=TTkColorGradient(increment=-2)))
         self.rootLayout().addWidget(self._frameOverlay)
 
 
     def dragEnterEvent(self, evt) -> bool:
-        TTkLog.debug(f"leave")
+        self.currentWidget().lowerWidget()
         return True
 
     def dragLeaveEvent(self, evt) -> bool:
-        TTkLog.debug(f"leave")
         self._frameOverlay.hide()
         return True
 
@@ -90,22 +89,20 @@ class KodeTab(TTkTabWidget):
             return super().dragMoveEvent(evt)
         h-=2
         y-=2
+
+        def _processDrag(x,y,w,h):
+            self._frameOverlay.show()
+            self._frameOverlay.resize(w,h)
+            self._frameOverlay.move(x, y)
+
         if x<w//4:
-            self._frameOverlay.show()
-            self._frameOverlay.resize(w//4,h)
-            self._frameOverlay.move(0, 2)
+            _processDrag(0,2,w//4,h)
         elif x>w*3//4:
-            self._frameOverlay.show()
-            self._frameOverlay.resize(w//4,h)
-            self._frameOverlay.move(w-w//4, 2)
+            _processDrag(w-w//4,2,w//4,h)
         elif y<h//4:
-            self._frameOverlay.show()
-            self._frameOverlay.resize(w,h//4)
-            self._frameOverlay.move(0, 2)
+            _processDrag(0,2,w,h//4)
         elif y>h*3//4:
-            self._frameOverlay.show()
-            self._frameOverlay.resize(w,h//4)
-            self._frameOverlay.move(0, 2+h-h//4)
+            _processDrag(0,2+h-h//4,w,h//4)
         else:
             self._frameOverlay.hide()
         return True
@@ -136,6 +133,7 @@ class KodeTab(TTkTabWidget):
                     index=offset
                 splitter.insertWidget(index+offset, kt:=KodeTab(border=False))
                 kt.addTab(widget,tb.text)
+
             if x<w//4:
                 _processDrop(index, TTkK.HORIZONTAL, 0)
             elif x>w*3//4:
