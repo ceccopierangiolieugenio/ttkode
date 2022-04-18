@@ -64,6 +64,8 @@ class _KolorFrame(TTkFrame):
         return super().paintEvent()
 
 class KodeTab(TTkTabWidget):
+    lastUsed = None
+    kodeTabs = []
     __slots__ = ('_frameOverlay')
     def __init__(self, *args, **kwargs):
         TTkTabWidget.__init__(self, *args, **kwargs)
@@ -72,7 +74,38 @@ class KodeTab(TTkTabWidget):
         self._frameOverlay.setBorderColor(TTkColor.fg("#00FFFF")+TTkColor.bg("#000044"))
         self._frameOverlay.setFillColor(TTkColor.bg("#000088", modifier=TTkColorGradient(increment=-2)))
         self.rootLayout().addWidget(self._frameOverlay)
+        self.focusChanged.connect(self._kodeFocus)
+        self.tabCloseRequested.connect(self._kodeClosedTab)
+        KodeTab.lastUsed = self
+        KodeTab.kodeTabs.append(self)
 
+    @pyTTkSlot(int)
+    def _kodeClosedTab(self, index):
+        # Remove the widget and/or all the cascade empty splitters
+        if not self._tabWidgets and len(KodeTab.kodeTabs)>1:
+            KodeTab.kodeTabs.pop(KodeTab.kodeTabs.index(self))
+            if KodeTab.lastUsed == self:
+                KodeTab.lastUsed = KodeTab.kodeTabs[0]
+            widget = self
+            splitter = widget.parentWidget()
+            while splitter.count() == 1:
+                widget = splitter
+                splitter = widget.parentWidget()
+            splitter.removeWidget(widget)
+
+    @pyTTkSlot(bool)
+    def _kodeFocus(self, focus):
+        TTkLog.debug(f"Focus: {focus}")
+        if focus:
+            KodeTab.lastUsed = self
+
+    def addTab(self, widget, label):
+        widget.focusChanged.connect(self._kodeFocus)
+        super().addTab(widget, label)
+
+    def removeTab(self, index):
+        self.widget(index).focusChanged.disconnect(self._kodeFocus)
+        return super().removeTab(index)
 
     def dragEnterEvent(self, evt) -> bool:
         self.currentWidget().lowerWidget()
@@ -131,7 +164,7 @@ class KodeTab(TTkTabWidget):
                     splitter.replaceWidget(index, splitter := TTkSplitter(orientation=orientation))
                     splitter.addWidget(self)
                     index=offset
-                splitter.insertWidget(index+offset, kt:=KodeTab(border=False))
+                splitter.insertWidget(index+offset, kt:=KodeTab(border=False, closable=True))
                 kt.addTab(widget,tb.text)
 
             if x<w//4:
@@ -146,7 +179,10 @@ class KodeTab(TTkTabWidget):
                 ret = super().dropEvent(evt)
 
         # Remove the widget and/or all the cascade empty splitters
-        if not tw._tabWidgets:
+        if not tw._tabWidgets and len(KodeTab.kodeTabs)>1:
+            KodeTab.kodeTabs.pop(KodeTab.kodeTabs.index(tw))
+            if KodeTab.lastUsed == tw:
+                KodeTab.lastUsed = KodeTab.kodeTabs[0]
             widget = tw
             splitter = widget.parentWidget()
             while splitter.count() == 1:
@@ -185,13 +221,13 @@ def main():
     splitter.addWidget(fileTree:=TTkFileTree(path='.'), 15)
 
     hSplitter = TTkSplitter(parent=splitter,  orientation=TTkK.HORIZONTAL)
-    kt = KodeTab(parent=hSplitter, border=False)
+    kt = KodeTab(parent=hSplitter, border=False, closable=True)
 
     def _openFile(file):
         with open(file, 'r') as f:
             content = f.read()
-        kt.addTab(te:=TTkTextEdit(),os.path.basename(file))
-        kt.setCurrentWidget(te)
+        KodeTab.lastUsed.addTab(te:=TTkTextEdit(),os.path.basename(file))
+        KodeTab.lastUsed.setCurrentWidget(te)
         te.setReadOnly(False)
         te.setText(highlight(content, PythonLexer(), TerminalTrueColorFormatter(style='rrt')))
 
