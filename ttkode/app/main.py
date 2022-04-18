@@ -100,6 +100,7 @@ class KodeTab(TTkTabWidget):
             KodeTab.lastUsed = self
 
     def addTab(self, widget, label):
+        label = TTkCfg.theme.fileIconColor + TTkCfg.theme.fileIcon.getIcon(label) + TTkColor.RST + " " + label
         widget.focusChanged.connect(self._kodeFocus)
         super().addTab(widget, label)
 
