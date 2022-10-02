@@ -33,165 +33,25 @@ from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters import TerminalFormatter, Terminal256Formatter, TerminalTrueColorFormatter
 
-from TermTk import *
-
-from TermTk import TTk, TTkK, TTkLog, TTkColor, TTkTheme
+from TermTk import TTk, TTkK, TTkLog, TTkCfg, TTkColor, TTkTheme, TTkTerm, TTkHelper
+from TermTk import TTkString
+from TermTk import TTkColorGradient
 from TermTk import pyTTkSlot, pyTTkSignal
-from TermTk import TTkFrame
+
+from TermTk import TTkFrame, TTkButton
+from TermTk import TTkTabWidget
 from TermTk import TColor, TText
 from TermTk import TTkAbstractScrollArea, TTkAbstractScrollView
 from TermTk import TTkFileDialogPicker
 from TermTk import TTkFileTree, TTkTextEdit
 
+from TermTk import TTkGridLayout
+from TermTk import TTkSplitter
+
 from .cfg  import *
 from .about import *
+from .kodetab import KodeTab
 # from .options import optionsFormLayout, optionsLoadTheme
-
-class _KolorFrame(TTkFrame):
-    __slots__ = ('_fillColor')
-    def __init__(self, *args, **kwargs):
-        TTkFrame.__init__(self, *args, **kwargs)
-        self._name = kwargs.get('name' , '_KolorFrame')
-        self._fillColor = kwargs.get('fillColor', TTkColor.RST)
-
-    def setFillColor(self, color):
-        self._fillColor = color
-
-    def paintEvent(self):
-        w,h = self.size()
-        for y in range(h):
-            self._canvas.drawText(pos=(0,y),text='',width=w,color=self._fillColor)
-        return super().paintEvent()
-
-class KodeTab(TTkTabWidget):
-    lastUsed = None
-    kodeTabs = []
-    __slots__ = ('_frameOverlay')
-    def __init__(self, *args, **kwargs):
-        TTkTabWidget.__init__(self, *args, **kwargs)
-        self._name = kwargs.get('name' , 'KodeTab')
-        self._frameOverlay = _KolorFrame('visible',False)
-        self._frameOverlay.setBorderColor(TTkColor.fg("#00FFFF")+TTkColor.bg("#000044"))
-        self._frameOverlay.setFillColor(TTkColor.bg("#000088", modifier=TTkColorGradient(increment=-2)))
-        self.rootLayout().addWidget(self._frameOverlay)
-        self.focusChanged.connect(self._kodeFocus)
-        self.tabCloseRequested.connect(self._kodeClosedTab)
-        KodeTab.lastUsed = self
-        KodeTab.kodeTabs.append(self)
-
-    @pyTTkSlot(int)
-    def _kodeClosedTab(self, index):
-        # Remove the widget and/or all the cascade empty splitters
-        if not self._tabWidgets and len(KodeTab.kodeTabs)>1:
-            KodeTab.kodeTabs.pop(KodeTab.kodeTabs.index(self))
-            if KodeTab.lastUsed == self:
-                KodeTab.lastUsed = KodeTab.kodeTabs[0]
-            widget = self
-            splitter = widget.parentWidget()
-            while splitter.count() == 1:
-                widget = splitter
-                splitter = widget.parentWidget()
-            splitter.removeWidget(widget)
-
-    @pyTTkSlot(bool)
-    def _kodeFocus(self, focus):
-        TTkLog.debug(f"Focus: {focus}")
-        if focus:
-            KodeTab.lastUsed = self
-
-    def addTab(self, widget, label):
-        label = TTkString(TTkCfg.theme.fileIcon.getIcon(label),TTkCfg.theme.fileIconColor) + TTkColor.RST + " " + label
-        widget.focusChanged.connect(self._kodeFocus)
-        super().addTab(widget, label)
-
-    def removeTab(self, index):
-        self.widget(index).focusChanged.disconnect(self._kodeFocus)
-        return super().removeTab(index)
-
-    def dragEnterEvent(self, evt) -> bool:
-        self.currentWidget().lowerWidget()
-        return True
-
-    def dragLeaveEvent(self, evt) -> bool:
-        self._frameOverlay.hide()
-        return True
-
-    def dragMoveEvent(self, evt) -> bool:
-        x,y = evt.x, evt.y
-        w,h = self.size()
-        if y<2:
-            return super().dragMoveEvent(evt)
-        h-=2
-        y-=2
-
-        def _processDrag(x,y,w,h):
-            self._frameOverlay.show()
-            self._frameOverlay.resize(w,h)
-            self._frameOverlay.move(x, y)
-
-        if x<w//4:
-            _processDrag(0,2,w//4,h)
-        elif x>w*3//4:
-            _processDrag(w-w//4,2,w//4,h)
-        elif y<h//4:
-            _processDrag(0,2,w,h//4)
-        elif y>h*3//4:
-            _processDrag(0,2+h-h//4,w,h//4)
-        else:
-            self._frameOverlay.hide()
-        return True
-
-    def dropEvent(self, evt) -> bool:
-        self._frameOverlay.hide()
-        x,y = evt.x, evt.y
-        ret = True
-        data = evt.data()
-        tb = data.tabButton()
-        tw = data.tabWidget()
-        if y<2:
-            ret = super().dropEvent(evt)
-        else:
-            w,h = self.size()
-            h-=2
-            y-=2
-            index  = tw._tabBar._tabButtons.index(tb)
-            widget = tw._tabWidgets[index]
-
-            def _processDrop(index, orientation, offset):
-                tw.removeTab(index)
-                splitter = self.parentWidget()
-                index = splitter.indexOf(self)
-                if splitter.orientation() != orientation:
-                    splitter.replaceWidget(index, splitter := TTkSplitter(orientation=orientation))
-                    splitter.addWidget(self)
-                    index=offset
-                splitter.insertWidget(index+offset, kt:=KodeTab(border=False, closable=True))
-                kt.addTab(widget,tb.text)
-
-            if x<w//4:
-                _processDrop(index, TTkK.HORIZONTAL, 0)
-            elif x>w*3//4:
-                _processDrop(index, TTkK.HORIZONTAL, 1)
-            elif y<h//4:
-                _processDrop(index, TTkK.VERTICAL, 0)
-            elif y>h*3//4:
-                _processDrop(index, TTkK.VERTICAL, 1)
-            else:
-                ret = super().dropEvent(evt)
-
-        # Remove the widget and/or all the cascade empty splitters
-        if not tw._tabWidgets and len(KodeTab.kodeTabs)>1:
-            KodeTab.kodeTabs.pop(KodeTab.kodeTabs.index(tw))
-            if KodeTab.lastUsed == tw:
-                KodeTab.lastUsed = KodeTab.kodeTabs[0]
-            widget = tw
-            splitter = widget.parentWidget()
-            while splitter.count() == 1:
-                widget = splitter
-                splitter = widget.parentWidget()
-            splitter.removeWidget(widget)
-
-        return ret
 
 def main():
     TTKodeCfg.pathCfg = appdirs.user_config_dir("ttkode")
@@ -199,7 +59,7 @@ def main():
     parser = argparse.ArgumentParser()
     # parser.add_argument('-f', help='Full Screen', action='store_true')
     parser.add_argument('-c', help=f'config folder (default: "{TTKodeCfg.pathCfg}")', default=TTKodeCfg.pathCfg)
-    parser.add_argument('filename', type=str, nargs='+',
+    parser.add_argument('filename', type=str, nargs='*',
                     help='the filename/s')
     args = parser.parse_args()
 
@@ -216,21 +76,34 @@ def main():
 
     TTkTheme.loadTheme(TTkTheme.NERD)
 
-    root = TTk(layout=TTkGridLayout(), title="TTkode")
+    root = TTk( layout=TTkGridLayout(), title="TTkode",
+                sigmask=(
+                    TTkTerm.Sigmask.CTRL_Q |
+                    TTkTerm.Sigmask.CTRL_S |
+                    TTkTerm.Sigmask.CTRL_Z |
+                    TTkTerm.Sigmask.CTRL_C ))
 
     splitter = TTkSplitter(parent=root)
-    splitter.addWidget(fileTree:=TTkFileTree(path='.'), 15)
+    layoutLeft = TTkGridLayout()
+    splitter.addItem(layoutLeft, 15)
 
     hSplitter = TTkSplitter(parent=splitter,  orientation=TTkK.HORIZONTAL)
+
+    menuFrame = TTkFrame(border=False, maxHeight=1)
+    fileMenu = menuFrame.menubarTop().addMenu("&File")
+    fileMenu.addMenu("Open")
+    fileMenu.addMenu("Close")
+    fileMenu.addMenu("Exit").menuButtonClicked.connect(lambda _:TTkHelper.quit())
+    layoutLeft.addWidget(menuFrame, 0,0)
+    fileTree = TTkFileTree(path='.')
+    layoutLeft.addWidget(fileTree, 1,0)
+    layoutLeft.addWidget(quitbtn := TTkButton(border=True, text="Quit", maxHeight=3), 2,0)
+    quitbtn.clicked.connect(root.quit)
+
     kt = KodeTab(parent=hSplitter, border=False, closable=True)
 
     def _openFile(file):
-        with open(file, 'r') as f:
-            content = f.read()
-        KodeTab.lastUsed.addTab(te:=TTkTextEdit(),os.path.basename(file))
-        KodeTab.lastUsed.setCurrentWidget(te)
-        te.setReadOnly(False)
-        te.setText(highlight(content, PythonLexer(), TerminalTrueColorFormatter(style='rrt')))
+        KodeTab.lastUsed.openFile(file)
 
     for file in args.filename:
         _openFile(file)

@@ -26,3 +26,4 @@
 from .cfg import *
 # from .glbl import *
 from .main import *
+from .kodetab import KodeTab
