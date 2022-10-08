@@ -29,12 +29,14 @@ from .cfg import TTKodeCfg
 
 class About(TTkAbout):
     ttkode = [
-        "__________________    __       ___      ",
-        "\_______________ /   / /       | |      ",
+        "__________________    __                ",
+        "\_______________ /   / /       ┌─┐      ",
         "    /\    /\   | |__/ /___   __| |_____ ",
         "   |  |  |  |  |  _  // _ \ / _  | ___ |",
         "   |  |  |  |  | | \ \ |_| ( (_| | ____|",
-        "   |__|  |__|  |_|  \_)___/ \____|_____)",]
+        "   |  |  |  |  └─┘  \_)___/ \____|_____)",
+        "   |  |  |  |                           ",
+        "   └──┘  └──┘                           ",]
 
     __slots__=('_image')
     def __init__(self, *args, **kwargs):
@@ -49,9 +51,9 @@ class About(TTkAbout):
             self._canvas.drawText(pos=(13,3+y),text=line, color=TTkColor.fg(f'#{c[0]:02X}{c[1]:02X}{c[2]:02X}'))
             c[2]-=0x18
             c[0]-=0x08
-        self._canvas.drawText(pos=(26,4),text=f"  Version: {TTKodeCfg.version}", color=TTkColor.fg('#AAAAFF'))
+        self._canvas.drawText(pos=(26, 9),text=f"  Version: {TTKodeCfg.version}", color=TTkColor.fg('#AAAAFF'))
         self._canvas.drawText(pos=(14,11),text=f"Powered By, pyTermTk")
-        self._canvas.drawText(pos=(2,13),text=f"https://github.com/ceccopierangiolieugenio/ttkode", color=TTkColor.fg('#44FFFF'))
-        self._canvas.drawText(pos=(2,14),text=f"https://github.com/ceccopierangiolieugenio/pyTermTk", color=TTkColor.fg('#44FFFF'))
+        self._canvas.drawText(pos=( 2,13),text=f"https://github.com/ceccopierangiolieugenio/ttkode", color=TTkColor.fg('#44FFFF'))
+        self._canvas.drawText(pos=( 2,14),text=f"https://github.com/ceccopierangiolieugenio/pyTermTk", color=TTkColor.fg('#44FFFF'))
 
         TTkWindow.paintEvent(self)

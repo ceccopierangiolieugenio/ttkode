@@ -78,32 +78,53 @@ def main():
 
     root = TTk( layout=TTkGridLayout(), title="TTkode",
                 sigmask=(
+                    # TTkTerm.Sigmask.CTRL_C |
                     TTkTerm.Sigmask.CTRL_Q |
                     TTkTerm.Sigmask.CTRL_S |
-                    TTkTerm.Sigmask.CTRL_Z |
-                    TTkTerm.Sigmask.CTRL_C ))
+                    TTkTerm.Sigmask.CTRL_Z ))
 
     splitter = TTkSplitter(parent=root)
     layoutLeft = TTkGridLayout()
-    splitter.addItem(layoutLeft, 15)
+    splitter.addItem(layoutLeft, 20)
 
     hSplitter = TTkSplitter(parent=splitter,  orientation=TTkK.HORIZONTAL)
 
     menuFrame = TTkFrame(border=False, maxHeight=1)
-    fileMenu = menuFrame.menubarTop().addMenu("&File")
-    fileMenu.addMenu("Open")
-    fileMenu.addMenu("Close")
-    fileMenu.addMenu("Exit").menuButtonClicked.connect(lambda _:TTkHelper.quit())
-    layoutLeft.addWidget(menuFrame, 0,0)
-    fileTree = TTkFileTree(path='.')
-    layoutLeft.addWidget(fileTree, 1,0)
-    layoutLeft.addWidget(quitbtn := TTkButton(border=True, text="Quit", maxHeight=3), 2,0)
-    quitbtn.clicked.connect(root.quit)
 
-    kt = KodeTab(parent=hSplitter, border=False, closable=True)
+    KodeTab(parent=hSplitter, border=False, closable=True)
 
     def _openFile(file):
         KodeTab.lastUsed.openFile(file)
+    def _closeFile(_):
+        if (index := KodeTab.lastUsed.currentIndex()) >= 0:
+            KodeTab.lastUsed.removeTab(index)
+
+    def _showFileDialog(fm):
+        filePicker = TTkFileDialogPicker(pos = (3,3), size=(75,24), caption="Pick Something", path=".", fileMode=TTkK.FileMode.AnyFile ,filter="All Files (*);;Python Files (*.py);;Bash scripts (*.sh);;Markdown Files (*.md)")
+        filePicker.pathPicked.connect(_openFile)
+        TTkHelper.overlay(None, filePicker, 20, 5, True)
+
+    fileMenu = menuFrame.menubarTop().addMenu("&File")
+    fileMenu.addMenu("Open").menuButtonClicked.connect(_showFileDialog)
+    fileMenu.addMenu("Close").menuButtonClicked.connect(_closeFile)
+    fileMenu.addMenu("Exit").menuButtonClicked.connect(lambda _:TTkHelper.quit())
+
+    def _showAbout(btn):
+        TTkHelper.overlay(None, About(), 30,10)
+    def _showAboutTTk(btn):
+        TTkHelper.overlay(None, TTkAbout(), 30,10)
+
+    helpMenu = menuFrame.menubarTop().addMenu("&Help", alignment=TTkK.RIGHT_ALIGN)
+    helpMenu.addMenu("About ...").menuButtonClicked.connect(_showAbout)
+    helpMenu.addMenu("About ttk").menuButtonClicked.connect(_showAboutTTk)
+
+    fileTree = TTkFileTree(path='.')
+
+    layoutLeft.addWidget(menuFrame, 0,0)
+    layoutLeft.addWidget(fileTree, 1,0)
+    layoutLeft.addWidget(quitbtn := TTkButton(border=True, text="Quit", maxHeight=3), 2,0)
+
+    quitbtn.clicked.connect(root.quit)
 
     for file in args.filename:
         _openFile(file)

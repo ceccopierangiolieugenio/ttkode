@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # MIT License
 #
 # Copyright (c) 2022 Eugenio Parodi <ceccopierangiolieugenio AT googlemail DOT com>
@@ -22,29 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from pygments import highlight
-from pygments.lexers import PythonLexer
-from pygments.formatters import TerminalFormatter, Terminal256Formatter, TerminalTrueColorFormatter
-
-from TermTk import TTk, TTkK, TTkLog, TTkCfg, TTkTheme, TTkTerm, TTkHelper
+from TermTk import TTkK, TTkLog, TTkCfg, TTkTheme, TTkTerm, TTkHelper
 from TermTk import TTkString
 from TermTk import TTkColor, TTkColorGradient
 from TermTk import pyTTkSlot, pyTTkSignal
 
-from TermTk import TTkTextDocument
-
 from TermTk import TTkFrame, TTkButton
 from TermTk import TTkTabWidget
-from TermTk import TColor, TText
-from TermTk import TTkAbstractScrollArea, TTkAbstractScrollView
-from TermTk import TTkFileDialogPicker
-from TermTk import TTkFileTree, TTkTextEdit
+from TermTk import TTkTextEdit
 
-from TermTk import TTkGridLayout
 from TermTk import TTkSplitter
 
 from .cfg  import *
 from .about import *
+from .kodetextedit import KodeTextEditView
+from .kodetextdocument import KodeTextDocument
 
 class _KolorFrame(TTkFrame):
     __slots__ = ('_fillColor')
@@ -107,18 +97,19 @@ class KodeTab(TTkTabWidget):
         else:
             with open(filePath, 'r') as f:
                 content = f.read()
-            txt = highlight(content, PythonLexer(), TerminalTrueColorFormatter(style='rrt'))
-            doc = TTkTextDocument(text=txt)
+            doc = KodeTextDocument(text=content, filePath=filePath)
             KodeTab.documents[filePath] = doc
+        tview = KodeTextEditView(document=doc, readOnly=False)
+        tedit = TTkTextEdit(textEditView=tview)
+        doc.kodeHighlightUpdate.connect(tedit.update)
+        label = TTkString(TTkCfg.theme.fileIcon.getIcon(filePath),TTkCfg.theme.fileIconColor) + TTkColor.RST + " " + os.path.basename(filePath)
 
-        KodeTab.lastUsed.addTab(te:=TTkTextEdit(document=doc),os.path.basename(filePath))
-        KodeTab.lastUsed.setCurrentWidget(te)
-        te.setReadOnly(False)
+        KodeTab.lastUsed.addTab(tedit, label)
+        KodeTab.lastUsed.setCurrentWidget(tedit)
 
-    def addTab(self, widget, label):
-        label = TTkString(TTkCfg.theme.fileIcon.getIcon(label),TTkCfg.theme.fileIconColor) + TTkColor.RST + " " + label
+    def addTab(self, widget, label, data=None):
         widget.focusChanged.connect(self._kodeFocus)
-        super().addTab(widget, label)
+        super().addTab(widget, label, data)
 
     def removeTab(self, index):
         self.widget(index).focusChanged.disconnect(self._kodeFocus)
@@ -165,6 +156,7 @@ class KodeTab(TTkTabWidget):
         tb = data.tabButton()
         tw = data.tabWidget()
         if y<2:
+            KodeTab.lastUsed = self
             ret = super().dropEvent(evt)
         else:
             w,h = self.size()
@@ -193,6 +185,7 @@ class KodeTab(TTkTabWidget):
             elif y>h*3//4:
                 _processDrop(index, TTkK.VERTICAL, 1)
             else:
+                KodeTab.lastUsed = self
                 ret = super().dropEvent(evt)
 
         # Remove the widget and/or all the cascade empty splitters

@@ -1,9 +1,6 @@
-
-#!/usr/bin/env python3
-
 # MIT License
 #
-# Copyright (c) 2021 Eugenio Parodi <ceccopierangiolieugenio AT googlemail DOT com>
+# Copyright (c) 2022 Eugenio Parodi <ceccopierangiolieugenio AT googlemail DOT com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .cfg import *
-# from .glbl import *
-from .main import *
-from .kodetab import KodeTab
-from .kodetextdocument import KodeTextDocument
+from TermTk import TTkLog
+from TermTk import TTkTextEditView
+
+class KodeTextEditView(TTkTextEditView):
+    def keyEvent(self, evt) -> bool:
+        self.document().getLock().acquire()
+        ret = super().keyEvent(evt)
+        self.document().getLock().release()
+        return ret
