@@ -33,25 +33,87 @@ from TermTk import TTkColor, TTkColorGradient
 from TermTk import pyTTkSlot, pyTTkSignal
 
 from TermTk import TTkTextDocument
+from .kodeformatter import KodeFormatter
 
 class KodeTextDocument(TTkTextDocument):
-    __slots__ = ('_filePath', '_timerRefresh', 'kodeHighlightUpdate', '_kodeDocMutex', '_lexer')
+    _linesRefreshed = 30
+    __slots__ = (
+        '_filePath', '_timerRefresh',
+        'kodeHighlightUpdate', '_kodeDocMutex',
+        '_blocks', '_changedContent', '_refreshContent',
+        '_lexer', '_formatter')
     def __init__(self, *args, **kwargs):
         self.kodeHighlightUpdate = pyTTkSignal()
         self._kodeDocMutex = Lock()
         self._lexer = None
+        self._blocks = []
+        # self._formatter = KodeFormatter(style='dracula')
+        self._formatter = KodeFormatter(style='gruvbox-dark')
         super().__init__(*args, **kwargs)
         self._filePath = kwargs.get('filePath',"")
         self._timerRefresh = TTkTimer()
         self._timerRefresh.timeout.connect(self._refreshEvent)
         self._timerRefresh.start(0.3)
-        self.contentsChanged.connect(lambda : self._timerRefresh.start(0.5))
+        self._changedContent = (0,0,len(self._dataLines))
+        self._refreshContent = (0,KodeTextDocument._linesRefreshed)
+        # self.contentsChanged.connect(lambda : self._timerRefresh.start(0.5))
+        self.contentsChange.connect(lambda a,b,c: TTkLog.debug(f"{a=} {b=} {c=}"))
+        self.contentsChange.connect(self._saveChangedContent)
+
+    @pyTTkSlot(int,int,int)
+    def _saveChangedContent(self,a,b,c):
+        if self._changedContent:
+            self._changedContent = TTkTextDocument._mergeChangesSlices(self._changedContent,(a,b,c))
+        else:
+            self._changedContent = (a,b,c)
+        if not self._refreshContent:
+            self._refreshContent = (self._changedContent[0], KodeTextDocument._linesRefreshed)
+        self._timerRefresh.start(0.1)
 
     @pyTTkSlot()
     def _refreshEvent(self):
+        if not self._refreshContent: return
         self._kodeDocMutex.acquire()
-        tsl = self._dataLines
-        rawl = [l._text for l in tsl]
+
+        ra,rb = self._refreshContent
+
+        if self._changedContent:
+            ca,cb,cc = self._changedContent
+            self._changedContent = None
+            self._blocks[ca:ca+cb] = [0]*cc
+            ra = min(ra,ca)
+
+        # find the beginning of the current block
+        # TTkLog.debug(self._blocks)
+        if ra and self._blocks:
+            blockId = self._blocks[ra]
+            for i,v in enumerate(reversed(self._blocks[:ra])):
+                # TTkLog.debug(f"{i=}:{v=} {blockId=}")
+                if v == blockId or not blockId:
+                    blockId = v
+                    ra -= 1
+                    rb += 1
+                else:
+                    break
+            # TTkLog.debug(f"{ra=} {rb=}")
+
+        # TTkLog.debug(f"{ra=} {rb=}")
+
+        eof = False
+        if (ra+rb) >= len(self._dataLines):
+            rb  = len(self._dataLines)-ra
+            eof=True
+
+        tsl = self._dataLines[ra:ra+rb]
+        # Find the offset from the first not empty line
+        # because pygments autostrip the heading empty lines
+        offset = 0
+        for i,l in enumerate(tsl):
+            if l != '':
+                offset = i
+                break
+
+        rawl = [l._text for l in tsl[offset:]]
         rawt = '\n'.join(rawl)
         if not self._lexer:
             # self._lexer = guess_lexer(rawt)
@@ -59,12 +121,46 @@ class KodeTextDocument(TTkTextDocument):
                 self._lexer = guess_lexer_for_filename(self._filePath, rawt)
             except ClassNotFound:
                 self._lexer = special.TextLexer()
-        TTkLog.debug(f"Refresh {self._lexer.name}")
-        # tsl1 = [TTkString()]
-        # highlight(rawt, PythonLexer(), EuFormatter(tsl1))
-        txt = highlight(rawt, self._lexer, TerminalTrueColorFormatter(style='rrt'))
-        tsl1 = [TTkString(t) for t in txt.split('\n')]
-        self._dataLines = tsl1 + tsl[len(tsl1):]
+            # self._formatter = TerminalTrueColorFormatter(style='dracula')
+
+        # TTkLog.debug(f"Refresh {self._lexer.name} {ra=} {rb=}")
+        tsl1  = [TTkString()]*(offset+1)
+        block = [0]*(offset+1)
+
+        kfd = KodeFormatter.Data(tsl1, block)
+        self._formatter.setDl(kfd)
+
+
+        highlight(rawt, self._lexer, self._formatter)
+        # txt = highlight(rawt, self._lexer, self._formatter)
+        # tsl1 = [TTkString(t) for t in txt.split('\n')]
+        # TTkLog.debug(f"{len(tsl1)} -> {len(tsl)}")
+
+        # for ll in tsl:
+        #     TTkLog.debug(f"1: -{ll}-")
+        # for ll in tsl1:
+        #     TTkLog.debug(f"2: -{ll}-")
+
+        tsl1 = tsl1[:rb]
+        block = block[:rb]
+        self._dataLines[ra:ra+rb] = tsl1 + tsl[len(tsl1):]
+        self._blocks[ra:ra+rb] = block + [-1]*(rb-len(block))
+        # TTkLog.debug(self._blocks)
+
+        if kfd.error is not None:
+            self._refreshContent = (ra+kfd.error,rb<<1)
+            # TTkLog.debug(f"Error: {self._refreshContent=}")
+        elif kfd.multiline is not None:
+            self._refreshContent = (ra+kfd.multiline,rb<<1)
+        elif (ra+rb) < len(self._dataLines):
+            self._refreshContent = (ra+rb,KodeTextDocument._linesRefreshed)
+        else:
+            self._refreshContent = None
+        # TTkLog.debug(f"{self._refreshContent=}")
+
+        if not eof:
+            self._timerRefresh.start(0.01)
+
         self._kodeDocMutex.release()
         self.kodeHighlightUpdate.emit()
 

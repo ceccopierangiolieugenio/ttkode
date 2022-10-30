@@ -24,7 +24,7 @@ from pygments.formatter import Formatter
 from pygments.token import Keyword, Name, Comment, String, Error, \
     Number, Operator, Generic, Token, Whitespace
 
-from TermTk import TTkString, TTkColor
+from TermTk import TTkString, TTkColor, TTkLog
 
 #: Map token types to a tuple of color values for light and dark
 #: backgrounds.
@@ -60,20 +60,76 @@ TTKODE_COLORS = {
     Error:              TTkColor.fg('#FF0000') , # ('_brightred_',      '_brightred_'),
 }
 
-class EuFormatter(Formatter):
-    __slots__ = ('_dl')
-    def __init__(self, dl):
-        self._dl = dl
+class KodeFormatter(Formatter):
+    class Data():
+        __slots__=('lines', 'block', 'error', 'multiline')
+        def __init__(self, lines, block):
+            self.lines = lines
+            self.block = block
+            self.error = None
+            self.multiline = False
+
+    __slots__ = ('_dl', '_blockNum', '_kodeStyles')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._kodeStyles = {}
+        self._blockNum = 1
+        for token, style in self.style:
+            # Token = Token.Comment.PreprocFile
+            # style = {
+            #   'color': '6272a4',
+            #   'bgcolor': None,
+            #   'bold': False, 'italic': False, 'underline': False,
+            #   'border': None,
+            #   'roman': None, 'sans': None, 'mono': None,
+            #   'ansicolor': None, 'bgansicolor': None}
+
+            # TTkLog.debug(f"{token=} {style=}")
+            color = TTkColor.RST
+            if style['color']:
+                color += TTkColor.fg(f"#{style['color']}")
+            if style['bgcolor']:
+                color += TTkColor.bg(f"#{style['bgcolor']}")
+            if style['bold']:
+                color += TTkColor.BOLD
+            if style['italic']:
+                color += TTkColor.ITALIC
+            if style['underline']:
+                color += TTkColor.UNDERLINE
+            self._kodeStyles[token] = color
+
         super().__init__()
-    def format(self, tokensource, outfile):
+
+    def setDl(self,dl):
+        self._dl = dl
+
+    def format(self, tokensource, _):
+        multiline = False
+        multilineId = 0
         for ttype, value in tokensource:
+            if ttype == Error and self._dl.error is None:
+                self._dl.error = len(self._dl.lines)-1
+            # self._dl.multiline = ttype == Comment.Multiline
+
+            while ttype not in self._kodeStyles:
+                ttype = ttype.parent
             # TTkLog.debug (f"{ttype=}")
             # TTkLog.debug (f"{value=}")
-            color = TTKODE_COLORS.get(ttype, TTkColor.RST)
-            if value == '\n':
-                self._dl.append(TTkString())
-            else:
-                values = value.split('\n')
-                self._dl[-1] += TTkString(values[-1],color)
-                self._dl += [TTkString(t,color) for t in values[1:]]
-            # self._dl += [TTkString(t) for t in value.split('\n')]
+            color = self._kodeStyles[ttype]
+
+            values = value.split('\n')
+
+            self._dl.lines[-1] += TTkString(values[0],color)
+            self._dl.lines += [TTkString(t,color) for t in values[1:]]
+            self._dl.block[-1] = self._blockNum
+            self._dl.block += [self._blockNum]*(len(values)-1)
+
+            # self._dl.lines += [TTkString(t) for t in value.split('\n')]
+            multiline = len(values)>1 if self._dl.lines[-1]._text == values[-1] else self._dl.multiline
+
+            if self._dl.lines[-1]._text == '' or not multiline:
+                self._blockNum += 1
+                multilineId = len(self._dl.lines)
+
+            if multiline:
+                self._dl.multiline = multilineId

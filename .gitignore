@@ -3,6 +3,7 @@
 TermTk
 tmp
 dist
+pygments
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
