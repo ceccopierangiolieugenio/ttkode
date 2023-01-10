@@ -18,6 +18,8 @@ A hopefully fast and mesmerizingly advanced [text-based](https://en.wikipedia.or
 
 [![screenshot](https://raw.githubusercontent.com/ceccopierangiolieugenio/binaryRepo/master/TTKode/ttkode.0.0.0.gif)](https://pypi.org/project/tlogg)
 
+[Peek 2022-10-08 22-25.webm](https://user-images.githubusercontent.com/8876552/195099208-65d4707e-0340-4077-835a-87ae6c8ae3b6.webm)
+
 # Install from [pypi](https://pypi.org/project/ttkode)
 ```bash
 pip install ttkode
