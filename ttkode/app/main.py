@@ -40,7 +40,6 @@ from TermTk import pyTTkSlot, pyTTkSignal
 
 from TermTk import TTkFrame, TTkButton
 from TermTk import TTkTabWidget
-from TermTk import TColor, TText
 from TermTk import TTkAbstractScrollArea, TTkAbstractScrollView
 from TermTk import TTkFileDialogPicker
 from TermTk import TTkFileTree, TTkTextEdit
