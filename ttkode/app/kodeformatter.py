@@ -110,6 +110,7 @@ class KodeFormatter(Formatter):
             if ttype == Error and self._dl.error is None:
                 self._dl.error = len(self._dl.lines)-1
             # self._dl.multiline = ttype == Comment.Multiline
+            multiline = ttype == Comment.Multiline
 
             while ttype not in self._kodeStyles:
                 ttype = ttype.parent
@@ -125,11 +126,17 @@ class KodeFormatter(Formatter):
             self._dl.block += [self._blockNum]*(len(values)-1)
 
             # self._dl.lines += [TTkString(t) for t in value.split('\n')]
-            multiline = len(values)>1 if self._dl.lines[-1]._text == values[-1] else self._dl.multiline
 
-            if self._dl.lines[-1]._text == '' or not multiline:
-                self._blockNum += 1
-                multilineId = len(self._dl.lines)
+            # multiline = len(values)>1 if self._dl.lines[-1]._text == values[-1] else self._dl.multiline
+            # if self._dl.lines[-1]._text == '' or not multiline:
+            #     self._blockNum += 1
+            #     multilineId = len(self._dl.lines)
 
             if multiline:
-                self._dl.multiline = multilineId
+                multilineId += len(values)
+            else:
+                multilineId = 0
+                self._blockNum += 1
+
+        if multiline:
+            self._dl.multiline = multilineId

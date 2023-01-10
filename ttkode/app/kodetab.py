@@ -59,14 +59,14 @@ class KodeTab(TTkTabWidget):
 
     __slots__ = ('_frameOverlay')
     def __init__(self, *args, **kwargs):
-        TTkTabWidget.__init__(self, *args, **kwargs)
-        self._name = kwargs.get('name' , 'KodeTab')
+        super().__init__(args, **kwargs)
         self._frameOverlay = _KolorFrame('visible',False)
         self._frameOverlay.setBorderColor(TTkColor.fg("#00FFFF")+TTkColor.bg("#000044"))
         self._frameOverlay.setFillColor(TTkColor.bg("#000088", modifier=TTkColorGradient(increment=-2)))
         self.rootLayout().addWidget(self._frameOverlay)
         self.focusChanged.connect(self._kodeFocus)
-        self.tabCloseRequested.connect(self._kodeClosedTab)
+        self.tabCloseRequested.disconnect(self.removeTab)
+        #self.tabCloseRequested.connect(self._kodeClosedTab)
         KodeTab.lastUsed = self
         KodeTab.kodeTabs.append(self)
 
@@ -93,14 +93,14 @@ class KodeTab(TTkTabWidget):
     def openFile(self, filePath):
         filePath = os.path.realpath(filePath)
         if filePath in KodeTab.documents:
-            doc = KodeTab.documents[filePath]
+            doc = KodeTab.documents[filePath]['doc']
         else:
             with open(filePath, 'r') as f:
                 content = f.read()
             doc = KodeTextDocument(text=content, filePath=filePath)
-            KodeTab.documents[filePath] = doc
+            KodeTab.documents[filePath] = {'doc':doc,'tabs':[]}
         tview = KodeTextEditView(document=doc, readOnly=False)
-        tedit = TTkTextEdit(textEditView=tview)
+        tedit = TTkTextEdit(textEditView=tview, lineNumber=True)
         doc.kodeHighlightUpdate.connect(tedit.update)
         label = TTkString(TTkCfg.theme.fileIcon.getIcon(filePath),TTkCfg.theme.fileIconColor) + TTkColor.RST + " " + os.path.basename(filePath)
 
@@ -109,9 +109,16 @@ class KodeTab(TTkTabWidget):
 
     def addTab(self, widget, label, data=None):
         widget.focusChanged.connect(self._kodeFocus)
+        filePath = widget.document().filePath()
+        KodeTab.documents[filePath]['tabs'].append(widget)
         super().addTab(widget, label, data)
 
     def removeTab(self, index):
+        TTkLog.debug(f"Removing: {index} -> {self.widget(index)}")
+        widget = self.widget(index)
+        filePath = widget.document().filePath()
+        TTkLog.debug(KodeTab.documents[filePath]['tabs'])
+        KodeTab.documents[filePath]['tabs'].remove(widget)
         self.widget(index).focusChanged.disconnect(self._kodeFocus)
         return super().removeTab(index)
 

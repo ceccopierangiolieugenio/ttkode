@@ -56,7 +56,6 @@ class KodeTextDocument(TTkTextDocument):
         self._timerRefresh.start(0.3)
         self._changedContent = (0,0,len(self._dataLines))
         self._refreshContent = (0,KodeTextDocument._linesRefreshed)
-        # self.contentsChanged.connect(lambda : self._timerRefresh.start(0.5))
         self.contentsChange.connect(lambda a,b,c: TTkLog.debug(f"{a=} {b=} {c=}"))
         self.contentsChange.connect(self._saveChangedContent)
 
@@ -95,7 +94,6 @@ class KodeTextDocument(TTkTextDocument):
                     rb += 1
                 else:
                     break
-            # TTkLog.debug(f"{ra=} {rb=}")
 
         # TTkLog.debug(f"{ra=} {rb=}")
 
@@ -116,12 +114,10 @@ class KodeTextDocument(TTkTextDocument):
         rawl = [l._text for l in tsl[offset:]]
         rawt = '\n'.join(rawl)
         if not self._lexer:
-            # self._lexer = guess_lexer(rawt)
             try:
                 self._lexer = guess_lexer_for_filename(self._filePath, rawt)
             except ClassNotFound:
                 self._lexer = special.TextLexer()
-            # self._formatter = TerminalTrueColorFormatter(style='dracula')
 
         # TTkLog.debug(f"Refresh {self._lexer.name} {ra=} {rb=}")
         tsl1  = [TTkString()]*(offset+1)
@@ -130,11 +126,7 @@ class KodeTextDocument(TTkTextDocument):
         kfd = KodeFormatter.Data(tsl1, block)
         self._formatter.setDl(kfd)
 
-
         highlight(rawt, self._lexer, self._formatter)
-        # txt = highlight(rawt, self._lexer, self._formatter)
-        # tsl1 = [TTkString(t) for t in txt.split('\n')]
-        # TTkLog.debug(f"{len(tsl1)} -> {len(tsl)}")
 
         # for ll in tsl:
         #     TTkLog.debug(f"1: -{ll}-")
@@ -159,7 +151,9 @@ class KodeTextDocument(TTkTextDocument):
         # TTkLog.debug(f"{self._refreshContent=}")
 
         if not eof:
-            self._timerRefresh.start(0.01)
+            self._timerRefresh.start(0.03)
+        else:
+            TTkLog.debug(f"Refresh {self._lexer.name} DONE!!!")
 
         self._kodeDocMutex.release()
         self.kodeHighlightUpdate.emit()
