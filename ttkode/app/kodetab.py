@@ -181,7 +181,7 @@ class KodeTab(TTkTabWidget):
                     splitter.addWidget(self)
                     index=offset
                 splitter.insertWidget(index+offset, kt:=KodeTab(border=False, closable=True))
-                kt.addTab(widget,tb.text)
+                kt.addTab(widget,tb.text())
 
             if x<w//4:
                 _processDrop(index, TTkK.HORIZONTAL, 0)
