@@ -32,7 +32,7 @@ setup(
     packages=['ttkode','ttkode.app'],
     python_requires=">=3.8",
     install_requires=[
-        'pyTermTk>=0.9.0a43',
+        'pyTermTk>=0.30.0a79',
         'appdirs',
         'pyyaml',
         'pygments'],
