@@ -45,15 +45,15 @@ class About(TTkAbout):
         self.setTitle('[PierCecco Cecco] Eugenio Parodi proudly presents...')
         self.resize(56,16)
 
-    def paintEvent(self):
+    def paintEvent(self, canvas):
         c = [0xFF,0xFF,0xFF]
         for y, line in enumerate(About.ttkode):
-            self._canvas.drawText(pos=(13,3+y),text=line, color=TTkColor.fg(f'#{c[0]:02X}{c[1]:02X}{c[2]:02X}'))
+            canvas.drawText(pos=(13,3+y),text=line, color=TTkColor.fg(f'#{c[0]:02X}{c[1]:02X}{c[2]:02X}'))
             c[2]-=0x18
             c[0]-=0x08
-        self._canvas.drawText(pos=(26, 9),text=f"  Version: {TTKodeCfg.version}", color=TTkColor.fg('#AAAAFF'))
-        self._canvas.drawText(pos=(14,11),text=f"Powered By, pyTermTk")
-        self._canvas.drawText(pos=( 2,13),text=f"https://github.com/ceccopierangiolieugenio/ttkode", color=TTkColor.fg('#44FFFF'))
-        self._canvas.drawText(pos=( 2,14),text=f"https://github.com/ceccopierangiolieugenio/pyTermTk", color=TTkColor.fg('#44FFFF'))
+        canvas.drawText(pos=(26, 9),text=f"  Version: {TTKodeCfg.version}", color=TTkColor.fg('#AAAAFF'))
+        canvas.drawText(pos=(14,11),text=f"Powered By, pyTermTk")
+        canvas.drawText(pos=( 2,13),text=f"https://github.com/ceccopierangiolieugenio/ttkode", color=TTkColor.fg('#44FFFF'))
+        canvas.drawText(pos=( 2,14),text=f"https://github.com/ceccopierangiolieugenio/pyTermTk", color=TTkColor.fg('#44FFFF'))
 
-        TTkWindow.paintEvent(self)
+        TTkWindow.paintEvent(self, canvas)
