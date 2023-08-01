@@ -135,7 +135,7 @@ def main():
                     help='the filename/s')
     args = parser.parse_args()
 
-    TTkLog.use_default_file_logging()
+    # TTkLog.use_default_file_logging()
 
     TTKodeCfg.pathCfg = args.c
     TTkLog.debug(f"Config Path: {TTKodeCfg.pathCfg}")
