@@ -71,7 +71,7 @@ class TTKode(TTkGridLayout):
 
         self._kodeTab = TTkKodeTab(parent=hSplitter, border=False, closable=True)
 
-        fileMenu = menuFrame.menubarTop().addMenu("&File")
+        fileMenu = menuFrame.newMenubarTop().addMenu("&File")
         fileMenu.addMenu("Open").menuButtonClicked.connect(self._showFileDialog)
         fileMenu.addMenu("Close") # .menuButtonClicked.connect(self._closeFile)
         fileMenu.addMenu("Exit").menuButtonClicked.connect(lambda _:TTkHelper.quit())
@@ -81,7 +81,7 @@ class TTKode(TTkGridLayout):
         def _showAboutTTk(btn):
             TTkHelper.overlay(None, TTkAbout(), 30,10)
 
-        helpMenu = menuFrame.menubarTop().addMenu("&Help", alignment=TTkK.RIGHT_ALIGN)
+        helpMenu = menuFrame.newMenubarTop().addMenu("&Help", alignment=TTkK.RIGHT_ALIGN)
         helpMenu.addMenu("About ...").menuButtonClicked.connect(_showAbout)
         helpMenu.addMenu("About ttk").menuButtonClicked.connect(_showAboutTTk)
 
