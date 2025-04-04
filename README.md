@@ -1,3 +1,8 @@
+# [DEPRECATED] [ttkode](https://github.com/ceccopierangiolieugenio/pyTermTk/tree/main/apps/ttkode) moved to the [pyTermTk](https://github.com/ceccopierangiolieugenio/pyTermTk)'s [monorepo](https://github.com/ceccopierangiolieugenio/pyTermTk/tree/main/apps) - please use https://github.com/ceccopierangiolieugenio/pyTermTk/tree/main/apps/ttkode
+
+-----
+
+
 ![Linux](https://img.shields.io/badge/-Linux-grey?logo=linux)
 ![Usage](https://img.shields.io/badge/Usage-Terminal%20User%20Interface-yellow)
 ![Python](https://img.shields.io/badge/Python-v3.8%5E-green?logo=python)
@@ -5,7 +10,7 @@
 [![pypi_version](https://img.shields.io/pypi/v/ttkode?label=pypi)](https://pypi.org/project/ttkode)
 [![pypi_version](https://img.shields.io/twitter/follow/Pier95886803?style=social&logo=twitter)](https://twitter.com/hashtag/pyTermTk?src=hashtag_click&f=live)
 
-# ttkode
+# ttkode - Freezed at: Fri  4 Apr 14:18:10 UTC 2025, latest available [here](https://github.com/ceccopierangiolieugenio/pyTermTk/tree/main/apps/ttkode)
 TerminalToolKit (Studio) Code (editor)
 
 A hopefully fast and mesmerizingly advanced [text-based](https://en.wikipedia.org/wiki/Text-based_user_interface) code editor inspired by [vscode](https://code.visualstudio.com)
