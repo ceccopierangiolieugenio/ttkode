@@ -2,6 +2,9 @@
 
 -----
 
+![Screenshot 2025-05-01 at 18 59 06](https://github.com/user-attachments/assets/e7bcc3d8-f13a-4c58-9d82-74eb1b6c0418)
+
+-----
 
 ![Linux](https://img.shields.io/badge/-Linux-grey?logo=linux)
 ![Usage](https://img.shields.io/badge/Usage-Terminal%20User%20Interface-yellow)
